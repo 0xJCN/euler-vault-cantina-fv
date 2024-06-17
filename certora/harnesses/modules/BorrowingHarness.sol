@@ -4,10 +4,11 @@ import "../../../src/EVault/shared/types/UserStorage.sol";
 import "../../../src/EVault/shared/types/Types.sol";
 import {ERC20} from "../../../lib/ethereum-vault-connector/lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "../AbstractBaseHarness.sol";
+import "../../../src/EVault/modules/RiskManager.sol";
 
 uint256 constant SHARES_MASK = 0x000000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
-contract BorrowingHarness is AbstractBaseHarness, Borrowing {
+contract BorrowingHarness is AbstractBaseHarness, Borrowing, RiskManagerModule {
     constructor(Integrations memory integrations) Borrowing(integrations) {}
 
     function initOperationExternal(uint32 operation, address accountToCheck)
@@ -43,4 +44,12 @@ contract BorrowingHarness is AbstractBaseHarness, Borrowing {
         return vaultCache.asset;
     }
 
+    function calculateLiquidityExt(address account) external view returns (uint256 collateralValue, uint256 liabilityValue) {
+        return calculateLiquidity(loadVault(), account, getCollaterals(account), false);
+    }
+
+    function vaultIsOnlyControllerExt(address account, address vault) external view returns (bool) {
+        address[] memory controllers = IEVC(evc).getControllers(account);
+        return controllers.length == 1 && controllers[0] == vault;
+    }
 }
